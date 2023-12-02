@@ -43,7 +43,7 @@ def write_to_file(filename, dict):
     with open(filename, "w") as f:
         f.write(dict)
 
-def highscore(highscore, time):
+def highscore(highscore, time, username):
     try:
         print("Trying to read from file")
         if read_from_file("highscore.json", "highscore") > highscore:
@@ -54,7 +54,8 @@ def highscore(highscore, time):
             print("Creating dict and trying to write to file")
             highscore_dict = {
                 "highscore" : highscore,
-                "seconds" : time
+                "seconds" : time,
+                "username" : username
             }
 
             json_dict = json.dumps(highscore_dict, indent=4)
@@ -64,7 +65,8 @@ def highscore(highscore, time):
         print("Failed to write to read or write")
         highscore_dict = {
                 "highscore" : highscore,
-                "seconds" : time
+                "seconds" : time,
+                "username" : username
             }
 
         json_dict = json.dumps(highscore_dict, indent=4)
@@ -99,10 +101,29 @@ def display_highscore():
         highscore = 0
 
     value = score_font.render("highscore: " + str(highscore) + " pts", True, green)
-    dis.blit(value, [445, 0])
+    dis.blit(value, [445, 17])
+
+def display_leader():
+    try:
+        leader = read_from_file("highscore.json", "username")
+    except json.decoder.JSONDecodeError:
+        return None
+    
+    width = 430- len(leader * 5)
+    
+    value = score_font.render("Score leader: " + leader, True, green)
+    dis.blit(value, [width, 0])
+
 
 # Loopen som i princip innehåller själva spelet. 
-def gameLoop():
+def gameLoop(user_name, volume):
+    global user_name_in_game
+    global volume_in_game
+
+    user_name_in_game = user_name
+    volume_in_game = volume
+
+
     game_over = False # En variabel som kontrollerar om spelet är över
     game_close = False # En variabel som kontrollerar om spelet är förlorat
  
@@ -125,8 +146,8 @@ def gameLoop():
     game_over_sound = pygame.mixer.Sound("data/soundeffect/game_over.mp3")
     eating_sound = pygame.mixer.Sound("data/soundeffect/eat.mp3")
 
-    pygame.mixer.Sound.set_volume(game_over_sound, 0.2)
-    pygame.mixer.Sound.set_volume(eating_sound, 0.2)
+    pygame.mixer.Sound.set_volume(game_over_sound, volume_in_game)
+    pygame.mixer.Sound.set_volume(eating_sound, volume_in_game)
 
     game_over_sound_played = False
 
@@ -154,14 +175,14 @@ def gameLoop():
                     if event.key == pygame.K_q:
                         total_time = end_time - start_time
                         print(f"end time: {end_time} start time: {start_time}")
-                        highscore(Length_of_snake - 1, round(total_time,2))
+                        highscore(Length_of_snake - 1, round(total_time,2), user_name_in_game)
                         print("goodbye")
                         game_over = True
                         game_close = False
                     if event.key == pygame.K_c:
                         total_time = end_time - start_time
-                        highscore(Length_of_snake - 1, round(total_time,2))
-                        gameLoop()
+                        highscore(Length_of_snake - 1, round(total_time,2), user_name_in_game)
+                        gameLoop(user_name, volume)
         # Sätta kontrollerna för spelet så att man kan kontrollera masken
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -220,6 +241,7 @@ def gameLoop():
         Your_score(Length_of_snake - 1) # Poängen på spelet är  längden på masken - huvudet.
         time_passed(current_time) # Skriva ut tiden som passerat.
         display_highscore() # displaying highscore top right.
+        display_leader() # displaying leader top right.
  
         pygame.display.update() #uppdatera skärmen.
  
@@ -233,7 +255,5 @@ def gameLoop():
  
     pygame.quit()
     quit()
- 
- 
-gameLoop()
+
 #Går det att programmera spel som en nybörjare inom programmering?
